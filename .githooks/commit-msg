@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+COMMIT_MSG_FILE="${1:-}"
+
+if [ -z "$COMMIT_MSG_FILE" ]; then
+  echo "commit-msg hook: missing commit message file" >&2
+  exit 1
+fi
+
+bunx commitlint --edit "$COMMIT_MSG_FILE"

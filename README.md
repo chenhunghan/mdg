@@ -27,6 +27,18 @@ iwr https://raw.githubusercontent.com/chenhunghan/mdg/main/install.ps1 | iex
 
 Re-running the PowerShell script is also safe; it updates `mdg.exe` to the latest GitHub release if needed.
 
+## Commit Messages
+
+This repo validates commit messages with commitlint on `postinstall`.
+
+Use commit messages like:
+
+```bash
+feat: add install script
+fix: improve embedding progress logs
+docs: update install instructions
+```
+
 ## Usage
 
 ### Text search (grep-compatible)
