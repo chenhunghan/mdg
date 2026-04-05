@@ -11,6 +11,22 @@ and node-llama-cpp for local embedding generation (GGUF models).
 bun install
 ```
 
+To install the latest release binary into `~/.local/bin`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/chenhunghan/mdg/main/install.sh | bash
+```
+
+Re-running the script is safe; it updates `mdg` to the latest GitHub release if needed.
+
+On Windows, use PowerShell:
+
+```powershell
+iwr https://raw.githubusercontent.com/chenhunghan/mdg/main/install.ps1 | iex
+```
+
+Re-running the PowerShell script is also safe; it updates `mdg.exe` to the latest GitHub release if needed.
+
 ## Usage
 
 ### Text search (grep-compatible)
