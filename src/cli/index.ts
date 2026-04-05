@@ -171,6 +171,7 @@ async function runGrep(rawArgs: string[]) {
 
   // Parse grep args
   const { flags, pattern, paths } = parseGrepArgs(grepArgs);
+  const patternFromFlag = flags.includes("-e") || flags.includes("--regexp");
 
   if (!pattern) {
     console.error("Usage: mdg grep [options] <pattern> [path...]");
@@ -188,6 +189,7 @@ async function runGrep(rawArgs: string[]) {
       semantic,
       hybrid,
       cwd,
+      patternFromFlag,
     });
 
     if (result.stdout) {

@@ -24,6 +24,8 @@ export interface GrepOptions {
   hybrid?: boolean;
   /** Working directory */
   cwd: string;
+  /** Pattern was supplied via -e/--regexp */
+  patternFromFlag?: boolean;
 }
 
 export interface GrepResult {
@@ -36,7 +38,7 @@ export interface GrepResult {
  * Execute a grep-like search over markdown files.
  */
 export async function executeGrep(options: GrepOptions): Promise<GrepResult> {
-  const { pattern, paths, flags, cwd } = options;
+  const { pattern, paths, flags, cwd, patternFromFlag = false } = options;
 
   // Semantic search mode
   if (options.semantic) {
@@ -49,7 +51,7 @@ export async function executeGrep(options: GrepOptions): Promise<GrepResult> {
   }
 
   // Build the grep command
-  const grepArgs = buildGrepArgs(pattern, paths, flags);
+  const grepArgs = buildGrepArgs(pattern, paths, flags, patternFromFlag);
 
   // Try FTS acceleration: use the index to find candidate files
   let narrowedArgs = grepArgs;
@@ -58,7 +60,12 @@ export async function executeGrep(options: GrepOptions): Promise<GrepResult> {
       const candidateFiles = findMatchingFiles(pattern);
       if (candidateFiles.length > 0 && candidateFiles.length < 200) {
         // Narrow grep to only candidate files (FTS coarse filter)
-        narrowedArgs = buildNarrowedGrepArgs(pattern, candidateFiles, flags);
+        narrowedArgs = buildNarrowedGrepArgs(
+          pattern,
+          candidateFiles,
+          flags,
+          patternFromFlag
+        );
       }
     } catch {
       // Index may not exist yet, fall through to full grep
@@ -111,18 +118,56 @@ function normalizeDefaultOutput(stdout: string, prefixDotSlash: boolean): string
 function buildGrepArgs(
   pattern: string,
   paths: string[],
-  flags: string[]
+  flags: string[],
+  patternFromFlag: boolean
 ): string {
   const parts: string[] = [];
+  const flagsWithValue = new Set([
+    "-e",
+    "--regexp",
+    "-f",
+    "--file",
+    "-m",
+    "--max-count",
+    "-A",
+    "--after-context",
+    "-B",
+    "--before-context",
+    "-C",
+    "--context",
+    "--include",
+    "--exclude",
+    "--exclude-dir",
+    "--label",
+    "--color",
+    "--colour",
+  ]);
 
   // Always add recursive flag for directory searches
   const hasRecursive = flags.some((f) => f === "-r" || f === "-R" || f === "--recursive");
 
-  // Add user flags
-  parts.push(...flags);
+  // Add user flags, preserving flag/value pairs
+  let patternConsumed = false;
+  for (let i = 0; i < flags.length; i++) {
+    const flag = flags[i]!;
+    parts.push(flag);
+
+    if (!flagsWithValue.has(flag)) continue;
+
+    const value = flags[i + 1];
+    if (value === undefined) continue;
+    parts.push(`'${value.replace(/'/g, "'\\''")}'`);
+    i++;
+
+    if (flag === "-e" || flag === "--regexp") {
+      patternConsumed = true;
+    }
+  }
 
   // Add pattern (properly quoted)
-  parts.push(`'${pattern.replace(/'/g, "'\\''")}'`);
+  if (!patternFromFlag || !patternConsumed) {
+    parts.push(`'${pattern.replace(/'/g, "'\\''")}'`);
+  }
 
   // Add paths or default to current dir
   if (paths.length > 0) {
@@ -146,12 +191,48 @@ function buildGrepArgs(
 function buildNarrowedGrepArgs(
   pattern: string,
   candidateFiles: string[],
-  flags: string[]
+  flags: string[],
+  patternFromFlag: boolean
 ): string {
   const parts: string[] = [];
+  const flagsWithValue = new Set([
+    "-e",
+    "--regexp",
+    "-f",
+    "--file",
+    "-m",
+    "--max-count",
+    "-A",
+    "--after-context",
+    "-B",
+    "--before-context",
+    "-C",
+    "--context",
+    "--include",
+    "--exclude",
+    "--exclude-dir",
+    "--label",
+    "--color",
+    "--colour",
+  ]);
 
   // Keep all flags including -r (just-bash grep needs it for file reads)
-  parts.push(...flags);
+  let patternConsumed = false;
+  for (let i = 0; i < flags.length; i++) {
+    const flag = flags[i]!;
+    parts.push(flag);
+
+    if (!flagsWithValue.has(flag)) continue;
+
+    const value = flags[i + 1];
+    if (value === undefined) continue;
+    parts.push(`'${value.replace(/'/g, "'\\''")}'`);
+    i++;
+
+    if (flag === "-e" || flag === "--regexp") {
+      patternConsumed = true;
+    }
+  }
 
   // Ensure -r is present for just-bash compatibility
   const hasRecursive = flags.some(
@@ -161,8 +242,10 @@ function buildNarrowedGrepArgs(
     parts.push("-r");
   }
 
-  // Add pattern
-  parts.push(`'${pattern.replace(/'/g, "'\\''")}'`);
+  // Add pattern unless it came from -e/--regexp
+  if (!patternFromFlag || !patternConsumed) {
+    parts.push(`'${pattern.replace(/'/g, "'\\''")}'`);
+  }
 
   // Add only the candidate files
   for (const f of candidateFiles) {

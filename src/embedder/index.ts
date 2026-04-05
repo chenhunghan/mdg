@@ -226,8 +226,12 @@ async function ensureInit(): Promise<void> {
       _useIPC = false;
       await initInProcess(llamaCpp);
       return;
-    } catch {
-      // Expected to fail in compiled binary — use IPC
+    } catch (error) {
+      // Fall back to IPC if the native path collides with Bun's SQLite.
+      // This is common after bun:sqlite has already been loaded.
+      if (!shouldFallbackToIPC(error)) {
+        throw error;
+      }
     }
 
     // Strategy 2: use IPC subprocess
@@ -236,6 +240,11 @@ async function ensureInit(): Promise<void> {
   })();
 
   return _initPromise;
+}
+
+export function shouldFallbackToIPC(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /SQLite already loaded/i.test(message);
 }
 
 /**
@@ -330,7 +339,7 @@ export async function embedBatch(
     });
 
     const batchResults = await Promise.all(promises);
-    results.push(...batchResults);
+    results.push(...(batchResults as number[][]));
   }
 
   return results;

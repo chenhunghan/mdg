@@ -31,6 +31,19 @@ test("exact grep output uses dot-prefixed paths for cwd searches", async () => {
   expect(result.stdout).toContain("./README.md:1:# mdg — Markdown Grep");
 });
 
+test("-e patterns are not duplicated into the shell command", async () => {
+  const result = await executeGrep({
+    pattern: "Markdown Grep",
+    paths: ["README.md"],
+    flags: ["-e"],
+    patternFromFlag: true,
+    cwd,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout).toBe("# mdg — Markdown Grep\n");
+});
+
 test("semantic formatter uses grep-like filenames without slashes", () => {
   const result = formatSearchResults(
     [
