@@ -234,10 +234,12 @@ async function generateEmbeddings(
   const db = getDb();
 
   // Ensure vec table exists
+  log("Initializing embedding model (first run may download the model)...");
   const dimensions = await getEmbeddingDimensions();
   ensureVecTable(dimensions);
 
   const modelId = await getModelId();
+  log(`Embedding model ready (${dimensions} dimensions)`);
 
   // Find chunks without embeddings (or with wrong model)
   const whereClause = force
@@ -259,7 +261,10 @@ async function generateEmbeddings(
     return;
   }
 
-  log(`Generating embeddings for ${chunks.length} chunks...`);
+  const batchSize = 32;
+  const totalBatches = Math.max(1, Math.ceil(chunks.length / batchSize));
+
+  log(`Generating embeddings for ${chunks.length} chunks in ${totalBatches} batches...`);
 
   const updateChunk = db.prepare(
     "UPDATE chunks SET embedding = ?, embed_model = ? WHERE id = ?"
@@ -270,11 +275,13 @@ async function generateEmbeddings(
   );
 
   // Process in batches
-  const batchSize = 32;
   for (let i = 0; i < chunks.length; i += batchSize) {
     const batch = chunks.slice(i, i + batchSize);
     const texts = batch.map((c) => c.content);
     const titles = batch.map((c) => c.path);
+    const batchNumber = Math.floor(i / batchSize) + 1;
+
+    log(`Embedding batch ${batchNumber}/${totalBatches} (${batch.length} chunks)...`);
 
     const embeddings = await embedBatch(texts, "document", titles);
 
