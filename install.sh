@@ -109,6 +109,11 @@ log "Installed ${BIN_NAME} ${LATEST_TAG} to ${INSTALL_DIR}/${BIN_NAME}"
 case ":$PATH:" in
   *":${INSTALL_DIR}:"*) ;;
   *)
-    log "Add ${INSTALL_DIR} to your PATH if it is not already there."
+    if [ "$OS" = "darwin" ]; then
+      log "${INSTALL_DIR} is not on your PATH. Add this to ~/.zshrc or ~/.bashrc:"
+      log "export PATH=\"$INSTALL_DIR:\$PATH\""
+    else
+      log "Add ${INSTALL_DIR} to your PATH if it is not already there."
+    fi
     ;;
 esac
