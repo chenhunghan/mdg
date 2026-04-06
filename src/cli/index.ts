@@ -154,6 +154,8 @@ async function runGrep(rawArgs: string[]) {
   const cwd = process.cwd();
   process.env.MDG_EMBED_RUNTIME = process.env.MDG_EMBED_RUNTIME || "ipc";
 
+  await ensureFreshSidecar();
+
   // Hybrid search is the default; keep legacy flags as no-ops.
   const hybrid = true;
   const grepArgs = rawArgs;
@@ -216,6 +218,11 @@ function triggerEmbeddingRefresh(rootPath: string): void {
   }
 }
 
+async function ensureFreshSidecar(): Promise<void> {
+  if (isSidecarInstalled()) return;
+  await installSidecar((msg) => console.error(msg));
+}
+
 async function runEmbeddingWorker(args: string[]) {
   const rootPath = args[0];
   if (!rootPath) {
@@ -223,6 +230,8 @@ async function runEmbeddingWorker(args: string[]) {
   }
 
   process.env.MDG_EMBED_RUNTIME = process.env.MDG_EMBED_RUNTIME || "ipc";
+
+  await ensureFreshSidecar();
 
   try {
     const modelId = getConfiguredModelUri();
