@@ -52,7 +52,7 @@ mdg grep "error handling patterns" docs/
 mdg grep -nl "authentication flow"
 ```
 
-### Indexing
+### Optional Indexing
 
 ```bash
 # Build/update the search index (FTS + embeddings)
@@ -68,15 +68,6 @@ mdg index --force
 mdg status
 ```
 
-## Build
-
-```bash
-# Compile to a standalone binary
-bun run build
-
-# The binary can be moved anywhere; it looks for vec0.dylib in ~/.mdg/lib/
-```
-
 ## Search setup
 
 Zero setup for basic `mdg grep` use.
@@ -89,11 +80,6 @@ mdg setup
 # Or just use mdg grep and it auto-installs on first use
 mdg grep "how to configure the API"
 ```
-
-## Notes
-
-- `mdg grep` is line-oriented for normal text search.
-- `mdg setup` pre-installs optional smart search dependencies.
 
 ## Requirements
 
