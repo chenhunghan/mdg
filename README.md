@@ -18,18 +18,6 @@ iwr https://raw.githubusercontent.com/chenhunghan/markdown-grep/main/install.ps1
 
 Re-running the PowerShell script is also safe; it updates `mdg.exe` to the latest GitHub release if needed.
 
-## Commit Messages
-
-This repo validates commit messages with commitlint on `postinstall`.
-
-Use commit messages like:
-
-```bash
-feat: add install script
-fix: improve embedding progress logs
-docs: update install instructions
-```
-
 ## Usage
 
 ### Text search (grep-compatible)
@@ -106,18 +94,6 @@ mdg grep "how to configure the API"
 
 - `mdg grep` is line-oriented for normal text search.
 - `mdg setup` pre-installs the optional hybrid search dependencies.
-
-## Configuration
-
-| Environment variable | Default | Description |
-|---|---|---|
-| `MDG_EMBED_MODEL` | `embeddinggemma-300M-Q8_0` | GGUF model URI for embeddings |
-
-Set `MDG_EMBED_MODEL` to a Hugging Face GGUF URI to use a different model:
-
-```bash
-export MDG_EMBED_MODEL="hf:Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-Q8_0.gguf"
-```
 
 ## Requirements
 
